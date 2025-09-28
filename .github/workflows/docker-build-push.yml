@@ -22,34 +22,25 @@ env:
   SSH_USER: ${{ secrets.EC2_USER }} 
 
 jobs:
-  checkout:
-    runs-on: ubuntu-latest
-    outputs:
-      sha: ${{ steps.get-sha.outputs.sha }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Get commit SHA
-        id: get-sha
-        run: echo "sha=${GITHUB_SHA}" >> $GITHUB_OUTPUT
-
   build:
-    needs: checkout
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+  
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
+  
       - name: Build image
         uses: docker/build-push-action@v6
         with:
-          context: ${{ env.CONTEXT }}
-          file: ${{ env.DOCKERFILE_PATH }}
+          context: ${{ env.CONTEXT }}          # örn: . veya ./app
+          file: ${{ env.DOCKERFILE_PATH }}     # örn: ./Dockerfile veya ./app/Dockerfile
           push: false
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ needs.checkout.outputs.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+  
 
   push:
     needs: build
