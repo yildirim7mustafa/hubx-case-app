@@ -1,110 +1,71 @@
-# DevOps Engineer Test Case
+# HubX Infrastructure (Terraform)
 
-## Core Tasks
+This project defines the **AWS infrastructure for the HubX application** using Terraform.  
+It provisions both the application layer and the database layer automatically.
 
-- **Dockerize the application:** Create a `Dockerfile` for the application.
-- **Use Docker Compose for local development:** Create a `docker-compose.yml` file to run the application and its database locally.
-- **Deploy to the cloud:** Deploy the application and its database to a cloud provider of your choice (e.g., AWS, Azure, GCP).
-- **Use Terraform for infrastructure:** The cloud infrastructure MUST be managed with Terraform.
-- **Automate with GitHub Actions:** Create a GitHub Actions workflow to build and deploy the application.
-- **Document your work:** Update this `README.md` with instructions on how to run and deploy the application.
+## 🚀 Components
 
-## Requirements
+- **VPC (10.0.0.0/16)**  
+  - Public Subnet (10.0.1.0/24) → Hosts the EC2 instance  
+  - 2 Database Subnets (10.0.20.0/24, 10.0.21.0/24) → Used by RDS Subnet Group  
+  - Internet Gateway + Route Tables  
 
-### 1. Containerization
+- **EC2 Instance**  
+  - Ubuntu 22.04, t3.medium  
+  - Bootstraps Docker & docker-compose via user-data  
+  - Runs `hubx-api` (8080) and `valkey` (6379) containers  
 
-- The application MUST be containerized using Docker.
-- A `docker-compose.yml` file MUST be provided for local development.
+- **RDS PostgreSQL**  
+  - PostgreSQL 17.6  
+  - Subnet Group across 2 Availability Zones  
+  - Security Group allows traffic only from EC2 SG on port 5432  
+  - Automated backups (7 days), parameter group with connection logging enabled  
 
-### 2. Infrastructure as Code (IaC)
+- **Security Groups**  
+  - **EC2 SG**: SSH (22), HTTP (80), API (8080), Valkey (6379) open to the internet *(for demo purposes)*  
+  - **RDS SG**: Allows PostgreSQL (5432) only from EC2 SG  
 
-- You MUST use Terraform to define and manage the cloud infrastructure.
-- Your Terraform code MUST include the application and its dependencies.
-- You SHOULD store your Terraform state in a remote backend (like an S3 bucket).
+## 🔑 Variables
 
-### 3. CI/CD
+- `aws_region` → AWS region (default: eu-west-1)  
+- `project_name` → Resource name prefix (default: hubx)  
+- `environment` → Environment name (dev, staging, prod)  
+- `key_name` → Existing EC2 key pair name in AWS  
+- `db_username` / `db_password` → RDS database credentials  
 
-- You SHOULD create a GitHub Actions workflow to automate the deployment.
-- The workflow SHOULD be triggered on pushes to the `main` branch.
-- The workflow SHOULD build a Docker image, push it to a container registry, and then run Terraform to deploy.
-- Secrets (like cloud provider credentials) MUST be stored in GitHub Secrets, not in the code.
+---
 
-### 4. Documentation
+## 📝 Note (Before Deployment)
 
-- You MUST update this `README.md` with clear, step-by-step instructions on:
-  - How to run the application locally using Docker Compose.
-  - How to deploy the application to the cloud using your scripts and Terraform.
+➡️ Please go to the [AWS EC2 Console (eu-west-1)](https://eu-west-1.console.aws.amazon.com/ec2/home?region=eu-west-1) and **create a key pair named `hubx-key`**.  
+⚠️ Do not lose this key — it will be required for connecting to the EC2 instance and for CI/CD usage.  
 
-### 5. Optionals
+---
 
-- **Infrastructure as Code:** Instead of writing Terraform HCL, use the Cloud Development Kit for Terraform (CDKTF) with TypeScript to define your infrastructure.
-- **Testing:** Add a testing framework (like Jest) and write some example unit or integration tests.
-- **Database Seeding:** Create a script to easily seed the database with test data for local development.
-- **Hot-Reloading:** Configure the local development environment to automatically restart the application when code changes are detected.
-- **Improved Documentation:** Enhance the documentation with more details, diagrams, or examples.
+## 📦 Deployment
 
-## Helpful Commands
+```bash
+terraform init
+terraform plan
+terraform apply
+```
 
-- Code Generation: `prisma generate`
-- Database Migrations: `prisma migrate deploy`
-- API Documentation: `http://localhost:8080/api/documentation`
-- Sign up flow
-  Request:
-  ```
-  curl http://localhost:8080/api/auth/sign-up/email \
-    --request POST \
-    --header 'Content-Type: application/json' \
-    --data '{ \
-    "name": "asdfasdf", \
-    "email": "asdfasdf@asdf.com", \
-    "password": "asdfasdf", \
-    "image": "", \
-    "callbackURL": "", \
-    "rememberMe": true \
-  }'
-  ```
-  Response:
-  ```
-  {
-    "token": "kU1bNj9pk8FHkUblgroNnuIeOYpj77tY",
-    "user": {
-      "id": "8iw7tA5paAgtfxevB9n9wI3WJZ5XQikG",
-      "email": "asdfasdf@asdf.com",
-      "name": "asdfasdf",
-      "image": "",
-      "emailVerified": false,
-      "createdAt": "2025-09-07T17:33:29.553Z",
-      "updatedAt": "2025-09-07T17:33:29.553Z"
-    }
-  }
-  ```
-- Sign in flow
-  Request:
-  ```
-  curl http://localhost:8080/api/auth/sign-in/email \
-    --request POST \
-    --header 'Content-Type: application/json' \
-    --data '{ \
-    "email": "asdfasdf@asdf.com", \
-    "password": "asdfasdf", \
-    "callbackURL": "http://localhost:8080/api/documentation", \
-    "rememberMe": true \
-  }'
-  ```
-  Response:
-  ```
-  {
-    "redirect": true,
-    "token": "PZTM9GMD1oT8t57kcYGXIA1Dow0n6ip9",
-    "url": "http://localhost:8080/api/documentation",
-    "user": {
-      "id": "8iw7tA5paAgtfxevB9n9wI3WJZ5XQikG",
-      "email": "asdfasdf@asdf.com",
-      "name": "asdfasdf",
-      "image": "",
-      "emailVerified": false,
-      "createdAt": "2025-09-07T17:33:29.553Z",
-      "updatedAt": "2025-09-07T17:33:29.553Z"
-    }
-  }
-  ```
+## 📤 Outputs
+
+- `ec2_public_ip` → Public IP of the application server  
+- `ssh_command` → Pre-generated SSH command to access EC2  
+- `api_url` → API access URL  
+- `rds_endpoint` → PostgreSQL connection endpoint  
+
+## 🔐 CI/CD – GitHub Actions Secrets (Required)
+
+Go to **Repository → Settings → Secrets and variables → Actions → New repository secret** and add the following entries:
+
+- **`DOCKERHUB_USERNAME`** → Your Docker Hub **username** (not your email, not your password)
+- **`DOCKERHUB_TOKEN`** → Docker Hub **Personal Access Token** (not your password). Create at Docker Hub → Account Settings → Security → “New Access Token”. Grant **Read & Write**.
+- **`EC2_HOST`** → EC2 public IP (e.g., `18.202.10.20`)
+- **`EC2_SSH_KEY`** → The **contents** of your private key (PEM) for `hubx-key` (multiline is OK). It should start with `-----BEGIN OPENSSH PRIVATE KEY-----` or `-----BEGIN RSA PRIVATE KEY-----` and end with the matching `END` line.
+- **`EC2_USER`** → SSH username (use `ubuntu`)
+
+
+

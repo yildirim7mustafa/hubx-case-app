@@ -461,10 +461,10 @@ output "ec2_private_ip" {
 
 output "ssh_command" {
   description = "SSH command to connect to EC2"
-  value       = "ssh -i ~/.ssh/${var.key_name}.pem ubuntu@${aws_instance.app.public_ip}"
+  value       = "ssh -i ${var.key_name}.pem ubuntu@${aws_instance.app.public_ip}"
 }
 
 output "api_url" {
   description = "API URL"
-  value       = "http://${aws_instance.app.public_ip}:8080"
+  value       = "http://${aws_instance.app.public_ip}:8080/api/documentation"
 }
