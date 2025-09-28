@@ -48,6 +48,7 @@ It provisions both the application layer and the database layer automatically.
 terraform init
 terraform plan
 terraform apply
+# please wait 10-12 min to deploy the resources
 ```
 
 ## 📤 Outputs
@@ -67,5 +68,4 @@ Go to **Repository → Settings → Secrets and variables → Actions → New re
 - **`EC2_SSH_KEY`** → The **contents** of your private key (PEM) for `hubx-key` (multiline is OK). It should start with `-----BEGIN OPENSSH PRIVATE KEY-----` or `-----BEGIN RSA PRIVATE KEY-----` and end with the matching `END` line.
 - **`EC2_USER`** → SSH username (use `ubuntu`)
 
-Fun fact note:
-Docker Compose currently uses a static image name, so the deployment may not work as expected until the image reference is updated dynamically!
+
