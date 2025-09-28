@@ -63,6 +63,7 @@ jobs:
           script: |
             set -euo pipefail
             cd "${REMOTE_DIR}"
+            sed -E -i "s|^([[:space:]]*image:[[:space:]]*)([^[:space:]]*hubx-api[^[:space:]]*)|\1${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest|g" docker-compose.yml
             echo "Pull latest image(s)..."
             docker compose pull
             echo "Recreate containers..."
