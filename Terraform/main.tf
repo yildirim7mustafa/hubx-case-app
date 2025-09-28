@@ -466,5 +466,5 @@ output "ssh_command" {
 
 output "api_url" {
   description = "API URL"
-  value       = "http://${aws_instance.app.public_ip}:8080"
+  value       = "http://${aws_instance.app.public_ip}:8080/api/documentation"
 }
