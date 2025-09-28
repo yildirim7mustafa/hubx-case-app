@@ -68,4 +68,17 @@ Go to **Repository → Settings → Secrets and variables → Actions → New re
 - **`EC2_SSH_KEY`** → The **contents** of your private key (PEM) for `hubx-key` (multiline is OK). It should start with `-----BEGIN OPENSSH PRIVATE KEY-----` or `-----BEGIN RSA PRIVATE KEY-----` and end with the matching `END` line.
 - **`EC2_USER`** → SSH username (use `ubuntu`)
 
+## Local Usage with Docker Compose
+
+If you want to run the project locally using Docker Compose:
+
+```bash
+# Build the images
+docker compose build
+
+# Start the containers in detached mode
+docker compose up -d
+
+# Stop and remove containers
+docker compose down
 
