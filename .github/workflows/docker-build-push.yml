@@ -20,6 +20,7 @@ env:
   REMOTE_DIR: /home/ubuntu/app
   SSH_HOST: ${{ secrets.EC2_HOST }}
   SSH_USER: ${{ secrets.EC2_USER }} 
+  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
 
 jobs:
   build-and-push-image:
