@@ -1,0 +1,37 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: hubx-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  valkey:
+    image: valkey/valkey:latest
+    container_name: hubx-valkey
+    ports:
+      - "6379:6379"
+
+  api:
+    image: yildirim7mustafa/hubx-api:latest
+    depends_on:
+      db:
+        condition: service_healthy
+      valkey:
+        condition: service_started
+    environment:
+      POSTGRESQL_URL: postgresql://postgres:postgres@db:5432/postgres?schema=public
+      VALKEY_HOST: valkey
+
+    ports:
+      - "8080:8080"
