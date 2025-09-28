@@ -17,12 +17,12 @@ env:
   DOCKERFILE_PATH: ./Dockerfile
   CONTEXT: .
   # --- EC2 deploy ayarları ---
-  REMOTE_DIR: /home/ubuntu/app       # EC2’da docker-compose.yml'nin bulunduğu klasör
+  REMOTE_DIR: /home/ubuntu/app
   SSH_HOST: ${{ secrets.EC2_HOST }}
-  SSH_USER: ${{ secrets.EC2_USER }} # örn: ubuntu veya ec2-user
+  SSH_USER: ${{ secrets.EC2_USER }} 
 
 jobs:
-  build-and-push:
+  build-and-push-image:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -48,7 +48,7 @@ jobs:
           cache-to: type=gha,mode=max
 
   deploy-to-ec2:
-    needs: build-and-push
+    needs: build-and-push-image
     runs-on: ubuntu-latest
     steps:
       - name: SSH | Pull & Restart with Docker Compose
@@ -56,27 +56,17 @@ jobs:
         with:
           host: ${{ env.SSH_HOST }}
           username: ${{ env.SSH_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}   # PEM içeriğini Secret olarak yapıştır
+          key: ${{ secrets.EC2_SSH_KEY }}   
           port: ${{ secrets.EC2_SSH_PORT || 22 }}
           script_stop: true
           envs: DOCKERHUB_USERNAME,DOCKERHUB_TOKEN,REMOTE_DIR,IMAGE_NAME
           script: |
             set -euo pipefail
             cd "${REMOTE_DIR}"
-
-            # (Opsiyonel) image private ise login ol
-            if [ -n "${DOCKERHUB_USERNAME:-}" ] && [ -n "${DOCKERHUB_TOKEN:-}" ]; then
-              echo "Login to Docker Hub on EC2..."
-              echo "${DOCKERHUB_TOKEN}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
-            fi
-
             echo "Pull latest image(s)..."
             docker compose pull
-
             echo "Recreate containers..."
             docker compose up -d --remove-orphans
-
             echo "Prune dangling images..."
             docker image prune -f
-
             echo "Deployment done."
